@@ -3,7 +3,14 @@
 //Parse the data
 //Print the data
 
+//error handling with try and catch
+
 const https = require('https');
+
+//Print error messages
+function printError (error) {
+  console.error(message.error);
+}
 
 //functuon to print message to console
 function printMessage(username, badgeCount, points) {
@@ -12,16 +19,35 @@ function printMessage(username, badgeCount, points) {
 }
 
 function getProfile(username) {
-  const request = https.get(`https://teamtreehouse.com/${username}.json`, response => {
-    let body = "";
-    response.on('data', data => {
-      body += data.toString();
-    });
-    response.on('end', ()=>{
-      const profile =JSON.parse(body);
-      printMessage(username, profile.badges.length, profile.points.JavaScript);
-    });
+  //any error in this block will be caught
+  try {
+    const request = https.get(`https://teamtreehouse.com/${username}.json`, response => {
+      if (response.statusCode === 200) {
+        let body = "";
+        response.on('data', data => {
+          body += data.toString();
+        });
+        response.on('end', () => {
+          try {
+            const profile =JSON.parse(body);
+            printMessage(username, profile.badges.length, profile.points.JavaScript);
+          } catch (error) {
+            console.error("This user does not exist");
+          }
+      });
+    }
+     else {
+      const message = `There was an error getting progile for ${username}`;
+      const statusCodeError = new Error(message);
+      console.log(statusCodeError);
+    }
   });
+  
+    //error handling
+    request.on('error', error => console.error(`Problem with request ${error.message}`));
+  } catch (error) {
+    console.error(error.message);
+  }
 }
 
 const user = process.argv.slice(2);
